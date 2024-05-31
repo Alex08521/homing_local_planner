@@ -110,7 +110,6 @@ namespace homing_local_planner
 
         goal_reached_ = false;
         costmap_ros_->getRobotPose(robot_pose_);
-        robot_pose_se2_ = PoseSE2(robot_pose_.pose);
 
         // prune global plan to cut off parts of the past (spatially before the robot)
         pruneGlobalPlan(*tf_, robot_pose_, global_plan_, cfg_.trajectory.global_plan_prune_distance);
@@ -133,9 +132,9 @@ namespace homing_local_planner
         const double goal_x = goal_point.pose.position.x;
         const double goal_y = goal_point.pose.position.y;
         const double goal_th = tf2::getYaw(goal_point.pose.orientation);
-        double dx = goal_x - robot_pose_se2_.x();
-        double dy = goal_y - robot_pose_se2_.y();
-        double dyaw = fmod(goal_th - robot_pose_se2_.theta(), 2 * M_PI);
+        double dx = goal_x - robot_pose_.pose.position.x;
+        double dy = goal_y - robot_pose_.pose.position.y;
+        double dyaw = fmod(goal_th - tf2::getYaw(robot_pose_.pose.orientation), 2 * M_PI);
 
         if ((fabs(std::sqrt(dx * dx + dy * dy)) < cfg_.goal_tolerance.xy_goal_tolerance) && (fabs(dyaw) < cfg_.goal_tolerance.yaw_goal_tolerance))
             goal_reached_ = true;

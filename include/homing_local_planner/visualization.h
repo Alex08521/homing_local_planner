@@ -49,7 +49,6 @@
 #include <nav_msgs/Path.h>
 #include <base_local_planner/goal_functions.h>
 #include <homing_local_planner/obstacles.h>
-#include <homing_local_planner/pose_se2.h>
 
 namespace homing_local_planner
 {

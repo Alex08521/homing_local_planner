@@ -63,11 +63,11 @@
 #include <cmath>
 #include <algorithm>
 
+
+#include <homing_local_planner/misc.h>
 #include <homing_local_planner/visualization.h>
 #include <homing_local_planner/homing_config.h>
 #include <homing_local_planner/one_euro_filter.h>
-#include <homing_local_planner/obstacles.h>
-#include <homing_local_planner/pose_se2.h>
 
 namespace homing_local_planner
 {
@@ -142,8 +142,7 @@ namespace homing_local_planner
         std::string global_frame_;     //!< The frame in which the controller will run
         std::string robot_base_frame_; //!< Used as the base frame id of the robot
         geometry_msgs::Twist last_cmd_;
-        geometry_msgs::PoseStamped robot_pose_; //!< Store current robot pose                                  //!< store whether the goal is reached or not
-        PoseSE2 robot_pose_se2_;
+        geometry_msgs::PoseStamped robot_pose_; //!< Store current robot pose     
         std::vector<geometry_msgs::Point> transformed_footprint_;
         std::vector<geometry_msgs::PoseStamped> global_plan_; //!< Store the current global plan
         std::vector<geometry_msgs::PoseStamped> local_plan_;
