@@ -68,7 +68,6 @@ namespace homing_local_planner
             tf_ = tf;
             costmap_ros_ = costmap_ros;
             costmap_ = costmap_ros_->getCostmap();
-            initialized_ = true;
             global_frame_ = costmap_ros_->getGlobalFrameID();
             robot_base_frame_ = costmap_ros_->getBaseFrameID();
 
@@ -77,6 +76,14 @@ namespace homing_local_planner
             dynamic_reconfigure::Server<HomingLocalPlannerReconfigureConfig>::CallbackType cb = boost::bind(&HomingLocalPlanner::reconfigureCB, this, _1, _2);
             dynamic_recfg_->setCallback(cb);
             world_model_ = new base_local_planner::CostmapModel(*costmap_);
+            odom_helper_.setOdomTopic(cfg_.odom_topic);
+
+            ros::NodeHandle nh_move_base("~");
+            double controller_frequency = 5;
+            nh_move_base.param("controller_frequency", controller_frequency, controller_frequency);
+            control_duration_ = 1.0 / controller_frequency;
+
+            initialized_ = true;
         }
     }
 
@@ -107,6 +114,13 @@ namespace homing_local_planner
             ROS_ERROR("homing_local_planner has not been initialized");
             return false;
         }
+
+        // Get robot velocity
+        geometry_msgs::PoseStamped robot_vel_tf;
+        odom_helper_.getRobotVel(robot_vel_tf);
+        robot_vel_.linear.x = robot_vel_tf.pose.position.x;
+        robot_vel_.linear.y = robot_vel_tf.pose.position.y;
+        robot_vel_.angular.z = tf2::getYaw(robot_vel_tf.pose.orientation);
 
         goal_reached_ = false;
         costmap_ros_->getRobotPose(robot_pose_);
@@ -201,6 +215,14 @@ namespace homing_local_planner
             v = 0;
             omega = 0;
         }
+
+        const double min_feasible_angular_speed = robot_vel_.angular.z - cfg_.robot.acc_lim_theta * control_duration_;
+        const double max_feasible_angular_speed = robot_vel_.angular.z + cfg_.robot.acc_lim_theta * control_duration_;
+        omega = clip(omega, min_feasible_angular_speed, max_feasible_angular_speed);
+
+        const double min_feasible_linear_speed = robot_vel_.linear.x - cfg_.robot.acc_lim_x * control_duration_;
+        const double max_feasible_linear_speed = robot_vel_.linear.x + cfg_.robot.acc_lim_x * control_duration_;
+        v = clip(v, min_feasible_linear_speed, max_feasible_linear_speed);
 
         cmd_vel.linear.x = v;
         cmd_vel.angular.z = omega;
@@ -377,11 +399,7 @@ namespace homing_local_planner
                 collision_points_.push_back(Eigen::Vector3d(transformed_plan[i].pose.position.x, transformed_plan[i].pose.position.y, path_point_yaw));
 
                 if (plan_length < lethal_point_distance)
-                {
                     lethal_point_distance = plan_length;
-                    // double dist =  distance_point_to_polygon_2d(const Eigen::Vector2d &point, const Point2dContainer &vertices)
-                    // boost::make_shared<PointObstacle>(transformed_plan[i].pose.position.x, transformed_plan[i].pose.position.y);
-                }
             }
 
             i++;

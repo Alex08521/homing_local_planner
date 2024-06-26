@@ -48,6 +48,8 @@ namespace homing_local_planner
     class HomingConfig
     {
     public:
+        std::string odom_topic;
+
         //! Robot related parameters
         struct Robot
         {
@@ -88,6 +90,8 @@ namespace homing_local_planner
 
         HomingConfig()
         {
+            odom_topic = "odom";
+
             // Robot
             robot.max_vel_x = 0.3;
             robot.max_vel_x_backwards = 0.2;

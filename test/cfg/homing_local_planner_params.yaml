@@ -10,11 +10,11 @@ HomingLocalPlanner:
 
   # Robot
 
-  max_vel_x: 0.2
+  max_vel_x: 0.3
   max_vel_x_backwards: 0.2
   max_vel_theta: 0.4
-  acc_lim_x: 0.2
-  acc_lim_theta: 0.5
+  acc_lim_x: 1.0
+  acc_lim_theta: 2.0
   turn_around_priority: True
   stop_dist: 0.5
   dec_dist: 1.0

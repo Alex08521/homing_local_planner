@@ -41,6 +41,8 @@ namespace homing_local_planner
 {
     void HomingConfig::loadRosParamFromNodeHandle(const ros::NodeHandle &nh)
     {
+        nh.param("odom_topic", odom_topic, odom_topic);
+
         // Robot
         nh.param("max_vel_x", robot.max_vel_x, robot.max_vel_x);
         nh.param("max_vel_x_backwards", robot.max_vel_x_backwards, robot.max_vel_x_backwards);

@@ -45,6 +45,7 @@
 #include <base_local_planner/goal_functions.h>
 #include <base_local_planner/point_grid.h>
 #include <base_local_planner/costmap_model.h>
+#include <base_local_planner/odometry_helper_ros.h>
 
 #include <tf/tf.h>
 #include <tf2_ros/buffer.h>
@@ -62,7 +63,6 @@
 #include "eigen3/Eigen/Dense"
 #include <cmath>
 #include <algorithm>
-
 
 #include <homing_local_planner/misc.h>
 #include <homing_local_planner/visualization.h>
@@ -138,11 +138,13 @@ namespace homing_local_planner
         double xy_reached_ = false;
         bool last_back_ = false;
         double dec_ratio_;
+        double control_duration_;
 
-        std::string global_frame_;     //!< The frame in which the controller will run
-        std::string robot_base_frame_; //!< Used as the base frame id of the robot
-        geometry_msgs::Twist last_cmd_;
-        geometry_msgs::PoseStamped robot_pose_; //!< Store current robot pose     
+        std::string global_frame_;              //!< The frame in which the controller will run
+        std::string robot_base_frame_;          //!< Used as the base frame id of the robot
+        geometry_msgs::Twist last_cmd_;         //!< Store last velocity command
+        geometry_msgs::Twist robot_vel_;        //!< Store current robot translational and angular velocity (vx, vy, omega)
+        geometry_msgs::PoseStamped robot_pose_; //!< Store current robot pose
         std::vector<geometry_msgs::Point> transformed_footprint_;
         std::vector<geometry_msgs::PoseStamped> global_plan_; //!< Store the current global plan
         std::vector<geometry_msgs::PoseStamped> local_plan_;
@@ -153,6 +155,7 @@ namespace homing_local_planner
         HomingConfig cfg_;
         ObstContainer obstacles_;
         base_local_planner::WorldModel *world_model_;
+        base_local_planner::OdometryHelperRos odom_helper_;
         boost::shared_ptr<dynamic_reconfigure::Server<HomingLocalPlannerReconfigureConfig>> dynamic_recfg_; //!< Dynamic reconfigure server to allow config modifications at runtime
         OneEuroFilter omega_filter_ = OneEuroFilter(ros::Time::now(), 0.0, 0.0, 1.0, 0.3, 1.0);
     };
