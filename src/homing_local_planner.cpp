@@ -37,7 +37,7 @@ namespace homing_local_planner
 
         visualization_ = HomingVisualizationPtr(new HomingVisualization(node, global_frame_));
 
-        // double control_frequency = 20.0;
+        double controller_frequency = 20.0;
 
         nav2_util::declare_parameter_if_not_declared(
             node, plugin_name_ + ".optimization_k_alpha", rclcpp::ParameterValue(-3.0));
@@ -50,6 +50,10 @@ namespace homing_local_planner
             node, plugin_name_ + ".robot_max_vel_x", rclcpp::ParameterValue(0.2));
         nav2_util::declare_parameter_if_not_declared(
             node, plugin_name_ + ".robot_max_vel_theta", rclcpp::ParameterValue(0.4));
+        nav2_util::declare_parameter_if_not_declared(
+            node, plugin_name_ + ".robot_acc_lim_x", rclcpp::ParameterValue(2.0));
+        nav2_util::declare_parameter_if_not_declared(
+            node, plugin_name_ + ".robot_acc_lim_theta", rclcpp::ParameterValue(2.0));
         nav2_util::declare_parameter_if_not_declared(
             node, plugin_name_ + ".robot_min_turn_radius", rclcpp::ParameterValue(0.0));
         nav2_util::declare_parameter_if_not_declared(
@@ -79,6 +83,8 @@ namespace homing_local_planner
 
         node->get_parameter(plugin_name_ + ".robot_max_vel_x", robot_max_vel_x_);
         node->get_parameter(plugin_name_ + ".robot_max_vel_theta", robot_max_vel_theta_);
+        node->get_parameter(plugin_name_ + ".robot_acc_lim_x", robot_acc_lim_x_);
+        node->get_parameter(plugin_name_ + ".robot_acc_lim_theta", robot_acc_lim_theta_);
         node->get_parameter(plugin_name_ + ".robot_min_turn_radius", robot_min_turn_radius_);
         node->get_parameter(plugin_name_ + ".robot_turn_around_priority", robot_turn_around_priority_);
         node->get_parameter(plugin_name_ + ".robot_stop_dist", robot_stop_dist_);
@@ -92,8 +98,8 @@ namespace homing_local_planner
         node->get_parameter(plugin_name_ + ".goal_tolerance_xy_goal_tolerance", goal_tolerance_xy_goal_tolerance_);
         node->get_parameter(plugin_name_ + ".goal_tolerance_yaw_goal_tolerance", goal_tolerance_yaw_goal_tolerance_);
 
-        // node->get_parameter("controller_frequency", control_frequency);
-        // control_duration_ = 1.0 / control_frequency;
+        node->get_parameter("controller_frequency", controller_frequency);
+        control_duration_ = 1.0 / controller_frequency;
     }
 
     void HomingLocalPlanner::cleanup()
@@ -136,8 +142,6 @@ namespace homing_local_planner
         geometry_msgs::msg::TwistStamped cmd_vel;
         robot_pose_ = pose;
         pruneGlobalPlan(tf_, robot_pose_, global_plan_vec_, trajectory_global_plan_prune_distance_);
-
-        RCLCPP_DEBUG(logger_, "speed linear:%f, angular: %f", speed.linear.x, speed.angular.z); // todo
 
         std::vector<geometry_msgs::msg::PoseStamped> transformed_plan; // in global_frame_
         if (!transformGlobalPlan(tf_, global_plan_vec_, robot_pose_, *costmap_,
@@ -225,6 +229,14 @@ namespace homing_local_planner
             v = 0;
             omega = 0;
         }
+
+        const double min_feasible_angular_speed = speed.angular.z - robot_acc_lim_theta_ * control_duration_;
+        const double max_feasible_angular_speed = speed.angular.z + robot_acc_lim_theta_ * control_duration_;
+        omega = clip(omega, min_feasible_angular_speed, max_feasible_angular_speed);
+
+        const double min_feasible_linear_speed = speed.linear.x - robot_acc_lim_x_ * control_duration_;
+        const double max_feasible_linear_speed = speed.linear.x + robot_acc_lim_x_ * control_duration_;
+        v = clip(v, min_feasible_linear_speed, max_feasible_linear_speed);
 
         cmd_vel.twist.linear.x = v;
         cmd_vel.twist.angular.z = omega;
@@ -582,11 +594,7 @@ namespace homing_local_planner
             {
                 collision_points_.push_back(Eigen::Vector3d(transformed_plan[i].pose.position.x, transformed_plan[i].pose.position.y, path_point_yaw));
                 if (plan_length < lethal_point_distance)
-                {
                     lethal_point_distance = plan_length;
-                    // double dist =  distance_point_to_polygon_2d(const Eigen::Vector2d &point, const Point2dContainer &vertices)
-                    // boost::make_shared<PointObstacle>(transformed_plan[i].pose.position.x, transformed_plan[i].pose.position.y);
-                }
             }
             i++;
         }

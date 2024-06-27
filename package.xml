@@ -5,6 +5,7 @@
   <version>0.1.1</version>
   <description>The homing_local_planner package</description>
   <maintainer email="leizeng@tu-dormund.de">Lei Zeng</maintainer>
+  <author email="azurazl@icloud.com">Lei Zeng</author>
   <license>BSD 3-Clause</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
