@@ -109,7 +109,7 @@ namespace homing_local_planner
         bool initialized_;
         double xy_reached_ = false;
         bool last_back_ = false;
-        // double control_duration_;
+        double control_duration_;
         double dec_ratio_;
 
         std::string global_frame_;     //!< The frame in which the controller will run
@@ -133,6 +133,8 @@ namespace homing_local_planner
 
         double robot_max_vel_x_;
         double robot_max_vel_theta_;
+        double robot_acc_lim_x_;
+        double robot_acc_lim_theta_;
         double robot_min_turn_radius_;
         bool robot_turn_around_priority_;
         double robot_stop_dist_;
