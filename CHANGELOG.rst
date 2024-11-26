@@ -2,8 +2,8 @@
 Changelog for package homing_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.2 (2024-11-26)
+------------------
 * Parameter `acc_lim_x` and `acc_lim_theta` added via ros parameter server.
 * Fixed compilation errors on ROS Noetic (see `#1 <https://github.com/zengxiaolei/homing_local_planner/issues/1>`_)
 * Parameter `min_turn_radius` added via ros parameter server.

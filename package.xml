@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>homing_local_planner</name>
-  <version>0.1.1</version>
+  <version>0.1.2</version>
   <description>The homing_local_planner package</description>
 
   <maintainer email="leizeng@tu-dormund.de">Lei Zeng</maintainer>
