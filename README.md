@@ -1,129 +1,186 @@
-# homing_local_planner ROS Package
+🐳 Инструкция по использованию Docker-контейнера для Homing Local Planner
+📋 Предварительные требования
+ОС: Linux (рекомендуется Ubuntu 22.04)
 
-**A simple, easy-to-use, and effective path tracking planner with a complete demo.**
+Docker: Установка Docker
 
-The homing_local_planner package implements a plug-in to the *nav_core::BaseLocalPlanner* of the 2D navigation stack in ROS1 or a plug-in to the *nav2_core::Controller* of the  Nav2 in ROS2. The underlying method called Homing Control has the objective to guide a robot along a reference path, which is a pure pursuit algorithm Implemented based on [1]  as reference. And code implementation of the package has some reference to [teb_local_planner](http://wiki.ros.org/teb_local_planner).
+NVIDIA драйверы (если есть GPU):
 
-This scheme considers a dynamic goal pose on the path located some distance ahead of the robots current pose. The robot is supposed to chase the moving goal pose (look-ahead pose) on the path. This path tracking strategy is similar to human drivers that steer a vehicle towards a dynamic lookahead point on the road, which distance depends on the vehicle speed, road curvature and visibility. The obstacle avoidance feature is currently not designed to allow for detours and exploration. When an obstacle appears on its planned path, the robot slows down or stops until the obstacle is cleared, just like a rail vehicle.
+bash
+sudo apt install nvidia-driver-535 nvidia-container-toolkit
+sudo nvidia-ctk runtime configure
+sudo systemctl restart docker
+X-сервер:
 
+bash
+sudo apt install x11-xserver-utils
+xhost +local:docker
+🚀 Быстрый старт
+Клонируйте репозиторий:
 
+bash
+git clone https://github.com/Alex08521/homing_local_planner.git
+cd homing_local_planner
+Соберите Docker-образ:
 
-##  Install 
+bash
+chmod +x docker-run.sh  # Даем права на выполнение
+./docker-run.sh
+После сборки автоматически запустится:
 
-Git clone this repository  and checkout the corresponding branch, then compile.
+Webots с TurtleBot3
 
-```shell
-cd ~/your_ws/src
-git clone https://github.com/zengxiaolei/homing_local_planner.git
-cd ..
-colcon_build / catkin_make
-```
+RViz с визуализацией навигации
 
+Планировщик homing_local_planner
 
+🔧 Ручное управление контейнером
+Запуск интерактивной сессии:
 
-## Parameter
+bash
+docker run -it --rm \
+    --gpus all \
+    -e DISPLAY=$DISPLAY \
+    -e QT_X11_NO_MITSHM=1 \
+    -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
+    -v /dev/shm:/dev/shm \
+    -v $(pwd):/workspace/src/homing_local_planner \
+    --network=host \
+    --shm-size=1g \
+    webots-homing-planner
+Основные команды внутри контейнера:
 
-*Robot*:
+bash
+# Пересборка пакета:
+colcon build --symlink-install --packages-select homing_local_planner
 
-- **max_vel_x**: maximum velocity in the x direction of the robot
-- **max_vel_theta**: maximum angular velocity of the robot
-- **acc_lim_x**: maximum translational acceleration of the robot
-- **acc_lim_theta**: maximum angular acceleration of the robot
-- **min_turn_radius**: minimum turning radius of the robot
-- **turn_around_priority**: if true, the robot preferentially adjusts the orientation to fit the direction of the path
-- **stop_dist**: When the Euclidean distance between the nearest lethal point on planned path and the robot frame origin is less than this distance, the robot stops
-- **dec_dist**:  When the Euclidean distance between the nearest lethal point on planned path and the robot frame origin is less than this distance, the robot slows down          
+# Запуск основной симуляции:
+ros2 launch homing_local_planner robot_launch.py
 
-*Trajectory*:
+# Тестовый запуск без Webots:
+ros2 launch homing_local_planner test_launch.py
 
-- **max_global_plan_lookahead_dist**: specify maximum length (cumulative Euclidean distances) of the subset of the global plan taken into account for optimization
-- **global_plan_viapoint_sep**: min. separation between each two consecutive via-points extracted from the global plan
-- **global_plan_goal_sep**: min. separation between the last via-point and goal pose
-- **global_plan_prune_distance**: distance between robot and via_points of global plan which is used for pruning
+# Запуск с разными картами:
+ros2 launch homing_local_planner robot_launch.py map:=skir
+🌍 Доступные карты
+Измените параметр map при запуске:
 
-*Goal Tolerance*:
+hospital (по умолчанию)
 
-- **yaw_goal_tolerance**:  allowed final orientation(yaw) error
-- **xy_goal_tolerance**: allowed final euclidean distance to the goal position
+office
 
-*Optimization*:
+town
 
-- **k_rho**: proportional parameter for linear velocity adjustment based on the Euclidean distance of the robot position to the current target
-- **k_alpha**: proportional parameter for angular velocity adjustment based on the tangential angle of the target position in the robot's frame of reference
-- **k_phi**: proportional parameter for angular velocity adjustment based on the difference between the robot's orientation(yaw) and the current target orientation(yaw)
+skir
 
+maze
 
+Пример:
 
-## Run and Demo
+bash
+ros2 launch homing_local_planner robot_launch.py map:=office
+⚙️ Конфигурация планера
+Файлы конфигурации находятся в:
+homing_local_planner/config/
 
-### 3D Webots Simulator for ROS2 Humble
+Основные настройки:
 
-Firstly make sure the simulation platform is installed.
+homing_controller.yaml - параметры контроллера
 
-[webots installtion (ubuntu) in detail](https://docs.ros.org/en/humble/Tutorials/Advanced/Simulators/Webots/Installation-Ubuntu.html)
+homing_planner.yaml - параметры планировщика
 
-#### Run
+homing_costmap.yaml - настройки costmap
 
-Then you can launch it easily by following command:
+После изменения конфигов пересоберите пакет:
 
-```shell
-ros2 launch homing_local_planner robot_launch.py 
-```
+bash
+colcon build --symlink-install --packages-select homing_local_planner
+🧪 Тестирование
+Запуск тестового окружения:
 
-#### Demo
+bash
+ros2 launch homing_local_planner test_launch.py
+Ручная публикация целей:
 
-The launchecd world is as follows:
+В RViz нажмите "2D Goal Pose"
 
-![image-20240106141810081](./.README_img/webots_demo.png)
+Укажите цель на карте
 
+Наблюдайте за поведением планера
 
+🐛 Отладка
+Просмотр топиков:
 
-### 2D Stage Simulator for ROS1 and ROS2 foxy
+bash
+ros2 topic list
+ros2 topic echo /homing_debug
+Визуализация отладочной информации:
 
-There's a complete demo based on 2D stage simulator in this package. Firstly make sure the simulation platform is installed.
+Откройте RViz
 
-- ROS2: [stage_ros2](https://github.com/n0nzzz/stage_ros2)
+Добавьте отображение:
 
-- ROS1:  [stage_ros](https://github.com/ros-simulation/stage_ros)
+Path (тема: /homing_path)
 
-#### Run
+MarkerArray (тема: /homing_markers)
 
-Then you can launch it easily by following command:
+💡 Советы по использованию
+Производительность:
 
-- For ROS2:
+Для лучшей производительности используйте NVIDIA GPU
 
+Если нет GPU, добавьте при запуске:
 
-```shell
-ros2 run stage_ros stageros /home/.../homing_local_planner/test/stage/maze_diff_drive.world
-ros2 launch homing_local_planner demo.launch.py
-```
+bash
+-e LIBGL_ALWAYS_SOFTWARE=1
+Кастомизация мира:
 
+Файлы миров Webots: homing_local_planner/worlds/
 
-- For ROS1:
+Чтобы использовать свой мир:
 
-```
-roslaunch homing_local_planner demo.launch
-```
+bash
+ros2 launch homing_local_planner robot_launch.py world:=/workspace/src/homing_local_planner/worlds/your_world.wbt
+Изменение робота:
 
-#### Demo
+Модели роботов: homing_local_planner/description/
 
-Dyamic gif demo is as following.
+Измените файл robot.urdf.xacro
 
-If there's a problem with display, you can check file path: /.README_img/homing_demo.gif
+🧹 Очистка
+Удаление Docker-образа:
 
-- Parking:
+bash
+docker rmi webots-homing-planner
+Очистка системы:
 
-![homing_demo](./.README_img/parking_demo.gif)
+bash
+docker system prune -a
+⚠️ Возможные проблемы и решения
+Проблема: Нет графического вывода
+Решение:
 
-- Forward navigation:
+bash
+xhost +local:docker
+sudo apt install mesa-utils
+Проблема: Ошибки NVIDIA
+Решение:
 
-![homing_demo](./.README_img/homing_demo.gif)
+bash
+docker run --rm --gpus all nvidia/cuda:11.8.0-base nvidia-smi
+Проблема: Ошибки памяти
+Решение: Увеличьте shared memory:
 
-- Navigation with direction adjustment and backwards:
+bash
+--shm-size=2g  # в docker-run.sh
+📚 Дополнительные материалы
+Описание алгоритма Homing Planner
 
-![homing_demo_turn](./.README_img/homing_turn_demo.gif)
+Документация Webots ROS2
 
+Навигация ROS 2
 
+Этот контейнер предоставляет полную среду для работы с homing_local_planner, включая визуализацию в RViz и симуляцию в Webots. Для начала работы достаточно выполнить всего две команды - клонирование репозитория и запуск скрипта! 🚀
 
 
 ## References
