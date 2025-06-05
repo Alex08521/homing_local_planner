@@ -6,38 +6,46 @@ Docker: Установка Docker
 
 NVIDIA драйверы (если есть GPU):
 
-bash
+```bash
 sudo apt install nvidia-driver-535 nvidia-container-toolkit
 sudo nvidia-ctk runtime configure
 sudo systemctl restart docker
+```
+
 X-сервер:
 
-bash
+```bash
 sudo apt install x11-xserver-utils
 xhost +local:docker
+```
+
 🚀 Быстрый старт
 Клонируйте репозиторий:
 
-bash
+```bash
 git clone https://github.com/Alex08521/homing_local_planner.git
 cd homing_local_planner
+```
+
 Соберите Docker-образ:
 
-bash
-chmod +x docker-run.sh  # Даем права на выполнение
-./docker-run.sh
+```bash
+chmod +x run_homing.sh  # Даем права на выполнение
+./run_homing.sh
+```
+
 После сборки автоматически запустится:
 
-Webots с TurtleBot3
+- Webots с TurtleBot3
 
-RViz с визуализацией навигации
+- RViz с визуализацией навигации
 
-Планировщик homing_local_planner
+- Планировщик homing_local_planner
 
 🔧 Ручное управление контейнером
 Запуск интерактивной сессии:
 
-bash
+```bash
 docker run -it --rm \
     --gpus all \
     -e DISPLAY=$DISPLAY \
@@ -48,9 +56,11 @@ docker run -it --rm \
     --network=host \
     --shm-size=1g \
     webots-homing-planner
+```
+
 Основные команды внутри контейнера:
 
-bash
+```bash
 # Пересборка пакета:
 colcon build --symlink-install --packages-select homing_local_planner
 
@@ -62,26 +72,29 @@ ros2 launch homing_local_planner test_launch.py
 
 # Запуск с разными картами:
 ros2 launch homing_local_planner robot_launch.py map:=skir
+```
+
 🌍 Доступные карты
 Измените параметр map при запуске:
 
-hospital (по умолчанию)
+-hospital (по умолчанию)
 
-office
+-office
 
-town
+-town
 
-skir
+-skir
 
-maze
+-maze
 
 Пример:
 
-bash
+```bash
 ros2 launch homing_local_planner robot_launch.py map:=office
 ⚙️ Конфигурация планера
 Файлы конфигурации находятся в:
 homing_local_planner/config/
+```
 
 Основные настройки:
 
@@ -93,13 +106,17 @@ homing_costmap.yaml - настройки costmap
 
 После изменения конфигов пересоберите пакет:
 
-bash
+```bash
 colcon build --symlink-install --packages-select homing_local_planner
+```
+
 🧪 Тестирование
 Запуск тестового окружения:
 
-bash
+```bash
 ros2 launch homing_local_planner test_launch.py
+```
+
 Ручная публикация целей:
 
 В RViz нажмите "2D Goal Pose"
@@ -111,9 +128,11 @@ ros2 launch homing_local_planner test_launch.py
 🐛 Отладка
 Просмотр топиков:
 
-bash
+```bash
 ros2 topic list
 ros2 topic echo /homing_debug
+```
+
 Визуализация отладочной информации:
 
 Откройте RViz
@@ -127,20 +146,24 @@ MarkerArray (тема: /homing_markers)
 💡 Советы по использованию
 Производительность:
 
-Для лучшей производительности используйте NVIDIA GPU
+-Для лучшей производительности используйте NVIDIA GPU
 
-Если нет GPU, добавьте при запуске:
+-Если нет GPU, добавьте при запуске:
 
-bash
+```bash
 -e LIBGL_ALWAYS_SOFTWARE=1
+```
+
 Кастомизация мира:
 
 Файлы миров Webots: homing_local_planner/worlds/
 
 Чтобы использовать свой мир:
 
-bash
+```bash
 ros2 launch homing_local_planner robot_launch.py world:=/workspace/src/homing_local_planner/worlds/your_world.wbt
+```
+
 Изменение робота:
 
 Модели роботов: homing_local_planner/description/
@@ -150,37 +173,40 @@ ros2 launch homing_local_planner robot_launch.py world:=/workspace/src/homing_lo
 🧹 Очистка
 Удаление Docker-образа:
 
-bash
+```bash
 docker rmi webots-homing-planner
+```
+
 Очистка системы:
 
-bash
+```bash
 docker system prune -a
+```
+
 ⚠️ Возможные проблемы и решения
 Проблема: Нет графического вывода
 Решение:
 
-bash
+```bash
 xhost +local:docker
 sudo apt install mesa-utils
+```
+
 Проблема: Ошибки NVIDIA
 Решение:
 
-bash
+```bash
 docker run --rm --gpus all nvidia/cuda:11.8.0-base nvidia-smi
+```
+
 Проблема: Ошибки памяти
 Решение: Увеличьте shared memory:
 
-bash
+```bash
 --shm-size=2g  # в docker-run.sh
-📚 Дополнительные материалы
-Описание алгоритма Homing Planner
+```
 
-Документация Webots ROS2
-
-Навигация ROS 2
-
-Этот контейнер предоставляет полную среду для работы с homing_local_planner, включая визуализацию в RViz и симуляцию в Webots. Для начала работы достаточно выполнить всего две команды - клонирование репозитория и запуск скрипта! 🚀
+Этот контейнер предоставляет полную среду для работы с homing_local_planner(https://github.com/zengxiaolei/homing_local_planner.git), включая визуализацию в RViz и симуляцию в Webots. Для начала работы достаточно выполнить всего две команды - клонирование репозитория и запуск скрипта! 🚀
 
 
 ## References
