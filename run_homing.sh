@@ -45,7 +45,7 @@ if command -v nvidia-smi &> /dev/null && nvidia-smi > /dev/null 2>&1; then
     echo "Обнаружена NVIDIA GPU, используется аппаратное ускорение"
 else
     echo "NVIDIA GPU не обнаружена, используется программный рендеринг"
-    GPU_PARAMS="-e LIBGL_ALWAYS_SOFTWARE=1"
+    GPU_PARAMS="-e LIBGL_ALWAYS_SOFTWARE=0 -e GALLIUM_DRIVER=radeonsi"
 fi
 
 # Запускаем контейнер
@@ -67,7 +67,7 @@ docker run -it --rm \
              echo 'Поиск пакета homing_local_planner...'; \
              ros2 pkg prefix homing_local_planner || echo 'Пакет не найден'; \
              echo 'Запуск launch-файла...'; \
-             ros2 launch homing_local_planner demo.launch.py"
+             ros2 launch homing_local_planner robot_launch.py"
 
 # Отключаем доступ к X-серверу
 xhost -local:docker > /dev/null 2>&1

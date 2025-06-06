@@ -36,7 +36,7 @@ def generate_launch_description():
     world = LaunchConfiguration('world')
     mode = LaunchConfiguration('mode')
     use_nav = LaunchConfiguration('nav', default=True)
-    use_slam = LaunchConfiguration('slam', default=False)
+    use_slam = LaunchConfiguration('slam', default=True)
     use_sim_time = LaunchConfiguration('use_sim_time', default=True)
 
     webots = WebotsLauncher(
@@ -117,7 +117,7 @@ def generate_launch_description():
             PythonLaunchDescriptionSource(os.path.join(
                 get_package_share_directory('turtlebot3_cartographer'), 'launch', 'cartographer.launch.py')),
             launch_arguments=[
-                ('use_sim_time', use_sim_time),
+                ('use_sim_time', use_sim_time)
             ],
             condition=launch.conditions.IfCondition(use_slam))
         navigation_nodes.append(turtlebot_slam)

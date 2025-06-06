@@ -24,9 +24,12 @@ ENV LANG=en_US.UTF-8 \
 RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
 RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu jammy main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null
 
+RUN apt install -y software-properties-common && add-apt-repository universe -y
+
 # Установка ROS Humble
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     ros-humble-desktop-full \
+    ros-dev-tools \
     python3-rosdep \
     python3-colcon-common-extensions \
     && rm -rf /var/lib/apt/lists/*
@@ -63,6 +66,11 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
     libxcb-xinput0 \
     libxcb-xkb1 \
     libxkbcommon-x11-0 \
+    libvulkan1 \
+    mesa-vulkan-drivers \
+    libgl1-mesa-dri \
+    libgles2-mesa \
+    libegl1-mesa \
     && rm -rf /var/lib/apt/lists/*
 
 # Установка Webots из tar-архива
@@ -82,14 +90,6 @@ RUN mkdir -p src && \
 
 # Клонируем webots_ros2
 RUN git clone --recurse-submodules https://github.com/cyberbotics/webots_ros2.git src/webots_ros2
-
-# Инициализация и обновление rosdep
-RUN rosdep init && \
-    rosdep update --rosdistro humble
-
-# Установка ROS-зависимостей через rosdep (только для системных пакетов)
-RUN . /opt/ros/humble/setup.sh && \
-    rosdep install --from-paths src --ignore-src -y --rosdistro humble --skip-keys="libopencv-dev libpcl-dev" || echo "Незначительные ошибки проигнорированы"
 
 # Установка ROS-пакетов, которые являются зависимостями
 RUN apt-get update && \
@@ -111,6 +111,7 @@ RUN apt-get update && \
     ros-humble-nav2-util \
     ros-humble-nav2-costmap-2d \
     ros-humble-nav2-msgs \
+    ros-humble-slam-toolbox \
     # Дополнительные ROS-пакеты
     ros-humble-graph-msgs \
     ros-humble-rviz-visual-tools \
@@ -131,11 +132,25 @@ RUN apt-get update && \
     ros-humble-pluginlib \
     ros-humble-tf2 \
     ros-humble-visualization-msgs \
+    ros-humble-nav2-simple-commander \
+    ros-humble-cartographer-ros \
+    ros-humble-diff-drive-controller \
+    ros-humble-ros2-control \
+    ros-humble-ros2-controllers \
+    ros-humble-turtlebot3* \
     # Дополнительные системные зависимости
     libpci3 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 \
     libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 libxcb-xinput0 \
-    libxcb-xkb1 libxkbcommon-x11-0 \
+    libxcb-xkb1 libxkbcommon-x11-0 libopencv-dev libpcl-dev \
     && rm -rf /var/lib/apt/lists/*
+
+# Инициализация и обновление rosdep
+RUN rosdep init && \
+    rosdep update --rosdistro humble
+
+# Установка ROS-зависимостей через rosdep (только для системных пакетов)
+RUN . /opt/ros/humble/setup.sh && \
+    rosdep install --from-paths src --ignore-src -y --rosdistro humble --skip-keys="libopencv-dev libpcl-dev" || echo "Незначительные ошибки проигнорированы"
 
 # Сборка проекта
 RUN . /opt/ros/humble/setup.sh && \
